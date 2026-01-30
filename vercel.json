@@ -1,13 +1,14 @@
 {
   "version": 2,
-  "functions": {
-    "server.js": {
-      "runtime": "nodejs18.x"
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node"
     }
-  },
+  ],
   "routes": [
     {
-      "src": "/submit",
+      "src": "/api/submit",
       "methods": ["POST"],
       "dest": "/server.js"
     }
