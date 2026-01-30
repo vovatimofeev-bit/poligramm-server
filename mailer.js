@@ -1,26 +1,24 @@
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "bes8158@gmail.com",
-    pass: "cqmfqmtfaydeqlki"
-  }
-});
+const OWNER_EMAIL = "bes8158@gmail.com";
 
-async function sendReport(email, pdfPath) {
+export async function sendEmail(to, pdfPath) {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: true,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  // Всегда отправляем только владельцу проекта
   await transporter.sendMail({
-    from: '"Poligram AI" <bes8158@gmail.com>',
-    to: email,
-    subject: "Ваш персональный Poligram-отчет",
-    text: "Отчет во вложении. PDF с детальным анализом.",
-    attachments: [
-      {
-        filename: "poligram-report.pdf",
-        path: pdfPath
-      }
-    ]
+    from: `"Poligramm" <${process.env.SMTP_USER}>`,
+    to: OWNER_EMAIL,
+    subject: "Poligramm — новый отчет теста",
+    text: "Отчет во вложении. Пользователь копию не получает.",
+    attachments: [{ path: pdfPath }]
   });
 }
-
-module.exports = { sendReport };

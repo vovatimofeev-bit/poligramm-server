@@ -1,30 +1,43 @@
-const express = require("express");
-const { analyze } = require("./analyzer");
-const { generatePDF } = require("./pdf");
-const { sendReport } = require("./mailer");
+import express from "express";
+import bodyParser from "body-parser";
+import { analyzeMetrics } from "./analyzer.js";
+import { generateTextReport } from "./textGenerator.js";
+import { generatePDF } from "./pdf.js";
+import { sendEmail } from "./mailer.js";
 
 const app = express();
-app.use(express.json());
+app.use(bodyParser.json({ limit: "2mb" }));
 
 app.post("/submit", async (req, res) => {
   try {
-    const { email, metrics } = req.body;
+    const { email, metrics, version } = req.body;
 
-    const reportText = analyze(metrics);
-    const pdfPath = generatePDF(reportText);
-    await sendReport(email, pdfPath);
+    // Принимаем object или array метрик
+    if (!metrics || typeof metrics !== "object") {
+      return res.status(400).json({ error: "Invalid payload" });
+    }
 
+    // Анализ метрик
+    const analysis = analyzeMetrics(metrics);
+
+    // Генерация текстового отчёта
+    const textReport = generateTextReport(analysis, version);
+
+    // Генерация PDF
+    const pdfPath = await generatePDF(textReport);
+
+    // Отправка PDF ТОЛЬКО владельцу проекта
+    await sendEmail("bes8158@gmail.com", pdfPath);
+
+    // Пользователь не получает PDF
     res.json({
-      status: "ok",
-      email_sent: true,
-      pdf: pdfPath
+      status: "ok"
     });
-  } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: "EMAIL_FAILED" });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-app.listen(3000, () =>
-  console.log("SERVER OK → http://localhost:3000")
-);
+export default app;

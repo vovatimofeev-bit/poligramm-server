@@ -1,26 +1,60 @@
-const PDFDocument = require("pdfkit");
-const fs = require("fs");
-const path = require("path");
+import PDFDocument from "pdfkit";
+import fs from "fs";
+import path from "path";
 
-function generatePDF(reportText) {
-  const reportsDir = path.join(__dirname, "reports");
-  if (!fs.existsSync(reportsDir)) fs.mkdirSync(reportsDir);
+export function generatePDF(text) {
+  return new Promise((resolve, reject) => {
+    const reportsDir = "./reports";
+    if (!fs.existsSync(reportsDir)) {
+      fs.mkdirSync(reportsDir);
+    }
 
-  const filePath = path.join(
-    reportsDir,
-    `report_${Date.now()}.pdf`
-  );
+    const filePath = path.join(
+      reportsDir,
+      `report_${Date.now()}.pdf`
+    );
 
-  const doc = new PDFDocument();
-  doc.pipe(fs.createWriteStream(filePath));
+    const doc = new PDFDocument({ margin: 50 });
+    const stream = fs.createWriteStream(filePath);
 
-  reportText.split("\n\n").forEach((block, index) => {
-    if (index > 0) doc.addPage();
-    doc.fontSize(14).text(block, { align: "left" });
+    doc.pipe(stream);
+
+    // Заголовок
+    doc.fontSize(18).text("Poligramm Test Report", { underline: true });
+    doc.moveDown(1.5);
+
+    // Если пришёл обычный текст — сохраняем старое поведение
+    if (typeof text === "string") {
+      doc.fontSize(12).text(text);
+    }
+
+    // Если пришёл объект — красиво форматируем
+    if (typeof text === "object" && text !== null) {
+      doc.fontSize(12);
+
+      for (const section in text) {
+        doc
+          .moveDown(0.5)
+          .fontSize(14)
+          .text(section.toUpperCase(), { underline: true });
+
+        const block = text[section];
+
+        if (typeof block === "object") {
+          for (const key in block) {
+            doc
+              .fontSize(12)
+              .text(`${key}: ${JSON.stringify(block[key])}`);
+          }
+        } else {
+          doc.text(String(block));
+        }
+      }
+    }
+
+    doc.end();
+
+    stream.on("finish", () => resolve(filePath));
+    stream.on("error", reject);
   });
-
-  doc.end();
-  return filePath;
 }
-
-module.exports = { generatePDF };
