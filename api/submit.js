@@ -1,15 +1,13 @@
-import express from "express";
-import bodyParser from "body-parser";
-import { analyzeMetrics } from "./analyzer.js";
-import { generateTextReport } from "./textGenerator.js";
-import { generatePDF } from "./pdf.js";
-import { sendEmail } from "./mailer.js";
+import { analyzeMetrics } from "../analyzer.js";
+import { generateTextReport } from "../textGenerator.js";
+import { generatePDF } from "../pdf.js";
+import { sendEmail } from "../mailer.js";
 
-const app = express();
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Method not allowed" });
+  }
 
-app.use(bodyParser.json({ limit: "2mb" }));
-
-app.post("/api/submit", async (req, res) => {
   try {
     const { email, metrics, version } = req.body;
 
@@ -24,14 +22,11 @@ app.post("/api/submit", async (req, res) => {
     await sendEmail(email, pdfPath);
 
     return res.json({
-      status: "ok",
-      pdf: pdfPath
+      status: "ok"
     });
+
   } catch (err) {
     console.error("SERVER ERROR:", err);
     return res.status(500).json({ error: "Server error" });
   }
-});
-
-// REQUIRED FOR VERCEL
-export default app;
+}
