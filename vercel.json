@@ -9,11 +9,6 @@
   "routes": [
     {
       "src": "/submit",
-      "methods": ["POST"],
-      "dest": "/server.js"
-    },
-    {
-      "src": "/(.*)",
       "dest": "/server.js"
     }
   ]
