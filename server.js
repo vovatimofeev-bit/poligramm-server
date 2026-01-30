@@ -10,32 +10,31 @@ app.use(bodyParser.json({ limit: "2mb" }));
 
 app.post("/submit", async (req, res) => {
   try {
-    const { email, metrics, version } = req.body;
+    const { metrics, version } = req.body;
 
-    // Принимаем object или array метрик
-    if (!metrics || typeof metrics !== "object") {
-      return res.status(400).json({ error: "Invalid payload" });
+    if (!metrics || !Array.isArray(metrics)) {
+      return res.status(400).json({ error: "Invalid metrics payload" });
     }
 
-    // Анализ метрик
+    console.log("Incoming metrics:", metrics.length);
+
     const analysis = analyzeMetrics(metrics);
-
-    // Генерация текстового отчёта
     const textReport = generateTextReport(analysis, version);
-
-    // Генерация PDF
     const pdfPath = await generatePDF(textReport);
 
-    // Отправка PDF ТОЛЬКО владельцу проекта
+    console.log("PDF generated:", pdfPath);
+
+    // ⚠️ ЖЁСТКО: отправляем ТОЛЬКО тебе
     await sendEmail("bes8158@gmail.com", pdfPath);
 
-    // Пользователь не получает PDF
+    console.log("Email sent to owner");
+
     res.json({
       status: "ok"
     });
 
   } catch (err) {
-    console.error(err);
+    console.error("SERVER ERROR:", err);
     res.status(500).json({ error: "Server error" });
   }
 });
