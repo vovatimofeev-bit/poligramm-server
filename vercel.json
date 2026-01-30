@@ -5,12 +5,6 @@
       "src": "server.js",
       "use": "@vercel/node"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/submit",
-      "methods": ["POST"],
-      "dest": "/server.js"
-    }
   ]
 }
+

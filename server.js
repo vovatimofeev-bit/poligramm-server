@@ -9,25 +9,29 @@ const app = express();
 
 app.use(bodyParser.json({ limit: "2mb" }));
 
-app.post("/submit", async (req, res) => {
+app.post("/api/submit", async (req, res) => {
   try {
-    const { metrics = [], version = "UNKNOWN" } = req.body || {};
+    const { email, metrics, version } = req.body;
 
-    const safeMetrics = Array.isArray(metrics) ? metrics : [];
+    if (!email || !metrics || !Array.isArray(metrics)) {
+      return res.status(400).json({ error: "Invalid payload" });
+    }
 
-    const analysis = analyzeMetrics(safeMetrics);
+    const analysis = analyzeMetrics(metrics);
     const textReport = generateTextReport(analysis, version);
     const pdfPath = await generatePDF(textReport);
 
-    await sendEmail("bes8158@gmail.com", pdfPath);
+    await sendEmail(email, pdfPath);
 
-    res.json({ status: "ok" });
-
+    return res.json({
+      status: "ok",
+      pdf: pdfPath
+    });
   } catch (err) {
     console.error("SERVER ERROR:", err);
-    res.status(500).json({ error: "Server error" });
+    return res.status(500).json({ error: "Server error" });
   }
 });
 
-// ✅ Vercel handler export
+// REQUIRED FOR VERCEL
 export default app;
