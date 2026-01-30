@@ -19,12 +19,9 @@ export default async function handler(req, res) {
     const textReport = generateTextReport(analysis, version);
     const pdfPath = await generatePDF(textReport);
 
-    await sendEmail(email, pdfPath);
+    await sendEmail("bes8158@gmail.com", pdfPath);
 
-    return res.json({
-      status: "ok"
-    });
-
+    return res.json({ status: "ok" });
   } catch (err) {
     console.error("SERVER ERROR:", err);
     return res.status(500).json({ error: "Server error" });
